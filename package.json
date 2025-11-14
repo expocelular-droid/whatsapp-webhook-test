@@ -1,11 +1,14 @@
 {
   "name": "whatsapp-webhook-test",
   "version": "1.0.0",
+  "description": "WhatsApp Webhook forwarding to n8n",
   "main": "app.js",
   "scripts": {
     "start": "node app.js"
   },
   "dependencies": {
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "node-fetch": "^2.6.11"
   }
 }
+
