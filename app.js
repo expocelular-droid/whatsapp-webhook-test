@@ -1,36 +1,56 @@
-// Import Express
-const express = require("express");
-const app = express();
+// Import dependencies
+const express = require('express');
+const fetch = require('node-fetch');
 
+// Create Express app
+const app = express();
 app.use(express.json());
 
-// Port and verify token
-const port = process.env.PORT || 10000;
-const VERIFY_TOKEN = process.env.VERIFY_TOKEN || "gtmiami_secret";
+// Environment variables
+const port = process.env.PORT || 3000;
+const verifyToken = process.env.VERIFY_TOKEN;
+const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
 
-// ✅ Webhook verification for Meta (GET /webhook)
-app.get("/webhook", (req, res) => {
-  const mode = req.query["hub.mode"];
-  const token = req.query["hub.verify_token"];
-  const challenge = req.query["hub.challenge"];
+// ✅ Verification route (GET)
+app.get('/', (req, res) => {
+  const mode = req.query['hub.mode'];
+  const token = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
 
-  if (mode === "subscribe" && token === VERIFY_TOKEN) {
-    console.log("✅ WEBHOOK VERIFIED");
+  if (mode === 'subscribe' && token === verifyToken) {
+    console.log('✅ Webhook verified');
     res.status(200).send(challenge);
   } else {
-    console.log("❌ Verification failed: token mismatch or missing params");
+    console.log('❌ Verification failed');
     res.sendStatus(403);
   }
 });
 
-// ✅ Webhook event receiver (POST /webhook)
-app.post("/webhook", (req, res) => {
-  console.log("📩 Incoming Webhook Event:\n", JSON.stringify(req.body, null, 2));
+// 📩 Message receiver (POST)
+app.post('/', async (req, res) => {
+  console.log('📩 Incoming WhatsApp event:');
+  console.log(JSON.stringify(req.body, null, 2));
+
+  try {
+    const response = await fetch(n8nWebhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req.body),
+    });
+
+    console.log(`➡️ Forwarded to n8n (${response.status})`);
+  } catch (error) {
+    console.error('❌ Error forwarding to n8n:', error);
+  }
+
   res.sendStatus(200);
 });
 
 // Start server
-app.listen(port, () => console.log(`🚀 Listening on port ${port}`));
+app.listen(port, () => {
+  console.log(`🚀 Server running on port ${port}`);
+});
+
 
 
 
