@@ -1,6 +1,5 @@
 // Import dependencies
-const express = require('express');
-const fetch = require('node-fetch');
+import express from 'express';
 const app = express();
 
 // Middleware
@@ -10,7 +9,7 @@ app.use(express.json());
 const verifyToken = process.env.VERIFY_TOKEN;
 
 // ======== VERIFY ENDPOINT (GET) ========
-app.get('/', (req, res) => {
+app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
@@ -25,10 +24,9 @@ app.get('/', (req, res) => {
 });
 
 // ======== MESSAGE HANDLER (POST) ========
-app.post('/', async (req, res) => {
+app.post('/webhook', async (req, res) => {
   console.log('📩 Incoming webhook:', JSON.stringify(req.body, null, 2));
 
-  // Extract text messages
   try {
     const entry = req.body.entry?.[0];
     const changes = entry?.changes?.[0];
@@ -48,7 +46,6 @@ app.post('/', async (req, res) => {
     console.error('⚠️ Error parsing or forwarding message:', err);
   }
 
-  // Acknowledge receipt to Meta
   res.sendStatus(200);
 });
 
