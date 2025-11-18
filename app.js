@@ -5,11 +5,12 @@ const app = express();
 // Middleware
 app.use(express.json());
 
-// Environment variable for token
+// Load environment variables
 const verifyToken = process.env.VERIFY_TOKEN;
+const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
 
-// ======== VERIFY ENDPOINT (GET) ========
-app.get('/webhook', (req, res) => {
+// ===== VERIFY ENDPOINT (GET) =====
+app.get('/', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
@@ -23,33 +24,35 @@ app.get('/webhook', (req, res) => {
   }
 });
 
-// ======== MESSAGE HANDLER (POST) ========
-app.post('/webhook', async (req, res) => {
+// ===== HANDLE MESSAGES (POST) =====
+app.post('/', async (req, res) => {
   console.log('📩 Incoming webhook:', JSON.stringify(req.body, null, 2));
 
   try {
     const entry = req.body.entry?.[0];
     const changes = entry?.changes?.[0];
     const messages = changes?.value?.messages;
+
     if (messages && messages.length > 0) {
       const text = messages[0].text?.body || '(no text)';
-      console.log('💬 Forwarding message text:', text);
+      console.log('💬 Forwarding text:', text);
 
-      // Forward text to your n8n webhook
-      await fetch('https://automation.gt-miami.com/webhook-test/whatsapp-incoming', {
+      // forward to your n8n webhook
+      await fetch(n8nWebhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: text }),
       });
     }
   } catch (err) {
-    console.error('⚠️ Error parsing or forwarding message:', err);
+    console.error('⚠️ Error handling message:', err);
   }
 
+  // Respond to Meta so it knows the webhook received the update
   res.sendStatus(200);
 });
 
-// ======== SERVER START ========
+// ===== START SERVER =====
 const port = process.env.PORT || 10000;
 app.listen(port, () => {
   console.log(`🚀 WhatsApp webhook running on port ${port}`);
