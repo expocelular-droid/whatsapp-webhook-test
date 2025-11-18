@@ -15,11 +15,19 @@ app.get('/', (req, res) => {
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
 
+  console.log('📥 Verification attempt:', {
+    mode,
+    token,
+    expected: verifyToken,
+    challenge,
+  });
+
   if (mode === 'subscribe' && token === verifyToken) {
     console.log('✅ WEBHOOK VERIFIED');
     res.status(200).send(challenge);
   } else {
     console.log('❌ WEBHOOK VERIFICATION FAILED');
+    console.log('👉 Check token mismatch or invalid mode.');
     res.sendStatus(403);
   }
 });
